@@ -1,0 +1,34 @@
+[project]
+name = "inspect_explorer"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib", "--maxfail=1", "-s"]
+
+
+norecursedirs = []
+
+# note: need `pip install flake8-pyproject` for this to work
+[tool.flake8]
+max-line-length = 88 # match `black`
+ignore = [
+    "E203", # whitespace before ':', black disagrees
+    "F722", # syntax error in forward method, pylint is wrong about this in jaxtyping
+]
+
+[tool.pylint]
+disable = [
+    "C0103", # Invalid name, single letter uppercase is common convention for matrix dims
+    "C0114", # Missing module docstring
+    "C0115", # Missing class docstring - often copying existing code for small classes
+    "C0116", # Missing function or method docstring
+    "R0903", # Too few public methods (for small classes)
+    "E1102", # not-callable, pylint is wrong about this way too often with torch.nn.functional
+]
+
+[tool.ruff.lint]
+ignore = [
+    "F722", # type annotations used by jaxtyping
+]
