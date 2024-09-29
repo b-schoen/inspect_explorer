@@ -14,7 +14,8 @@ class BashCommandResult:
 
 # TODO(bschoen): Common higher level abstraction args like `timeout_in_seconds` are really a property of the workspace, but do I want a shared class here with them?`
 def execute_bash_command(
-    command: str, current_working_directory: pathlib.Path
+    command: str,
+    current_working_directory: pathlib.Path,
 ) -> BashCommandResult:
     """Directly execute a raw unchecked bash command. Should ALWAYS be wrapped before use.
 
@@ -59,6 +60,13 @@ def execute_bash_command(
     #     - instead of using capture_output
     #
     DEFAULT_TIMEOUT_IN_SECONDS = 60.0
+
+    # arbitrary upper limit for printing, since models will often bash write entire python files
+    print(
+        "Executing bash command:"
+        f"\n - in {current_working_directory}"
+        f"\n - command: {command[:100]}{'...' if len(command) > 100 else ''}"
+    )
 
     result: subprocess.CompletedProcess = subprocess.run(
         command,

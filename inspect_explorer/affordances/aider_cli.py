@@ -33,3 +33,42 @@ def send_aider_message(
         command=command,
         current_working_directory=pathlib.Path.cwd(),
     )
+
+
+def show_repo_map() -> raw_bash_execution.BashCommandResult:
+    """
+    Show the repo map.
+
+    This generates a (default 1024 token) summary of the current repo.
+
+    Example:
+
+        inspect_explorer/in_context_tool_use/initial_explanation.py:
+        │def get_in_context_tool_use_initial_explanation() -> str:
+        ⋮...
+
+        inspect_explorer/in_context_tool_use/parsing.py:
+        ⋮...
+        │def parse_tool_use_request_from_model_response(
+        │    client: openai.OpenAI,
+        │    model_response: openai.types.chat.ChatCompletionMessageParam,
+        ⋮...
+
+        inspect_explorer/in_context_tool_use/tool_use_types.py:
+        ⋮...
+        │class ToolDefinition(pydantic.BaseModel):
+        ⋮...
+        │class ToolUseRequest(pydantic.BaseModel):
+        ⋮...
+        │class ToolUseResponse(pydantic.BaseModel):
+        ⋮...
+        │@dataclasses.dataclass(frozen=True)
+        │class ToolDefinitionWithCallable[R, **P]:
+        ⋮...
+
+    """
+    command = "aider --show-repo-map"
+    return raw_bash_execution.execute_bash_command(
+        command=command,
+        current_working_directory=pathlib.Path.cwd(),
+    )
