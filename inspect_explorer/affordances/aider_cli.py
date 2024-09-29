@@ -3,6 +3,7 @@ import pathlib
 from inspect_explorer.affordances import raw_bash_execution
 
 
+# note: could ask it to write tests first
 # note: just supporting one for now
 def send_aider_message(
     read_filepath: pathlib.Path,

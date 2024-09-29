@@ -50,7 +50,7 @@ class ModelID(Enum):
     HUGGINGFACE_LOCAL_GPT2_SMALL = "hf/openai-community/gpt2"
 
 
-def remove_provider_prefix(model_id: str) -> str:
+def remove_provider_prefix(model_id: ModelID) -> str:
     """
     Remove the provider prefix from a model id.
 

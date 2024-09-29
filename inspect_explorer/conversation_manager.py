@@ -6,9 +6,12 @@ import enum
 import json
 import pathlib
 
+
 import coolname
 import pytz
 from openai.types.chat import ChatCompletionMessageParam
+import rich.markdown
+import rich.table
 
 from inspect_explorer.model_ids import ModelID
 
@@ -101,3 +104,25 @@ class ConversationManager:
         filepath = self._directory / f"{conversation_id}.json"
         _write_json_file(filepath, [])
         return conversation_id
+
+
+def show_conversation(
+    conversation_manager: ConversationManager,
+    conversation_id: ConversationId,
+) -> None:
+    """
+    Show the conversation history for a given conversation ID.
+    """
+    messages = conversation_manager.get_conversation_messages(conversation_id)
+
+    table = rich.table.Table(
+        "role",
+        "content",
+        title=f"Conversation History: {conversation_id}",
+        show_lines=True,
+    )
+
+    for message in messages:
+        table.add_row(message["role"], rich.markdown.Markdown(message["content"]))
+
+    rich.print(table)

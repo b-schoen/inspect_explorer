@@ -18,7 +18,7 @@ class _ToolUseRequestWrapper(pydantic.BaseModel):
 
     # allow the model to indicate that it couldn't find or parse anything valid, in which case
     # is sets this to False and we return None
-    is_valid: bool
+    completely_failed_to_parse: bool
 
     function_name: str
     arguments: list[_ToolUseRequestArgWrapper]
@@ -27,7 +27,7 @@ class _ToolUseRequestWrapper(pydantic.BaseModel):
 # NOTE: This can be used for arbitrary structured output
 def parse_tool_use_request_from_model_response(
     client: openai.OpenAI,
-    model_response: openai.types.chat.ChatCompletionMessageParam,
+    model_response: str,
 ) -> ToolUseRequest | None:
     """
     Parses a ToolUseRequest from a model response using a smaller model.
@@ -42,19 +42,28 @@ def parse_tool_use_request_from_model_response(
     content = (
         "Given the following data, format the value "
         f"for `{Constants.TOOL_USE_REQUEST_KEY}` with the given response format. "
-        "If you can't find or parse the tool use request, set `is_valid` to False."
         f"\n\n{model_response}"
     )
 
+    messages = [
+        {"role": "system", "content": "Extract the tool use request information."},
+        {"role": "user", "content": content},
+    ]
+
     response = client.beta.chat.completions.parse(
         model=model,
-        messages=[{"role": "user", "content": content}],
+        messages=messages,
         response_format=_ToolUseRequestWrapper,
     )
 
     tool_use_request_wrapper: _ToolUseRequestWrapper = response.choices[0].message.parsed
 
-    if not tool_use_request_wrapper.is_valid:
+    if tool_use_request_wrapper.completely_failed_to_parse:
+        print(
+            f"Failed to find a valid tool use request in\n\n{model_response}.\n\n"
+            f"Parser model was given:\n\n{messages}\n\n"
+            f"Parser model responded with: {response.model_dump_json(indent=4)}"
+        )
         return None
 
     tool_use_request = ToolUseRequest(
