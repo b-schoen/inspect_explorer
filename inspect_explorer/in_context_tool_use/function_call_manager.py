@@ -1,3 +1,6 @@
+import json
+import dataclasses
+
 import rich
 
 from inspect_explorer.in_context_tool_use.tool_use_types import (
@@ -44,7 +47,13 @@ class FunctionCallManager:
         print(response)  # Output: ToolUseResponse(function_name="add", return_value="8")
     """
 
-    def __init__(self, tool_definitions_with_callables: list[ToolDefinitionWithCallable]) -> None:
+    def __init__(
+        self,
+        tool_definitions_with_callables: list[ToolDefinitionWithCallable],
+        require_user_confirmation: bool = False,
+    ) -> None:
+
+        self._require_user_confirmation = require_user_confirmation
 
         # Store a mapping of function names to their ToolDefinitionWithCallable objects
         self._tool_map: dict[str, ToolDefinitionWithCallable] = {
@@ -70,6 +79,9 @@ class FunctionCallManager:
 
         tool_def_with_callable = self._tool_map[request.function_name]
 
+        # require user confirmation if specified
+        self._prompt_user_for_confirmation_if_required(request=request)
+
         # Call the function with the provided arguments
 
         # note: we just assume values are in order instead of enforcing kwargs,
@@ -77,6 +89,12 @@ class FunctionCallManager:
         #       don't know argument names
 
         result = tool_def_with_callable.callable_fn(*request.arguments.values())
+
+        # if the result is a dataclass, convert it to json (this makes defining callables
+        # much easier to work with, since otherwise _everything_ has to pass around jsons)
+        if dataclasses.is_dataclass(result):
+            # note: not sure if indent makes it easier / harder for model to read
+            result = json.dumps(dataclasses.asdict(result), indent=4)
 
         # Return the result wrapped in a ToolUseResponse
         response = ToolUseResponse(
@@ -87,3 +105,29 @@ class FunctionCallManager:
         rich.print(f"Executed request. Tool response for {response.function_name}")
 
         return response
+
+    def _prompt_user_for_confirmation_if_required(self, request: ToolUseRequest) -> None:
+
+        if not self._require_user_confirmation:
+            return
+
+        # here we pretty print, since otherwise can be hard to read something like generated code
+        print("---")
+        print(f"ToolUseRequest: (function_name: {request.function_name})")
+        for key, value in request.arguments.items():
+            print("---")
+            print(key)
+            rich.print(value)
+        print("---")
+
+        prompt = "Do you want to execute this tool? (y/n)"
+
+        # otherwise prompt user for confirmation, raising exception if not confirmed
+        while True:
+            response = input(prompt).strip().lower()
+            if response in ("y", "yes"):
+                return
+            elif response in ("n", "no"):
+                raise Exception("User declined to execute tool")
+            else:
+                print("Please respond with 'y' or 'n'.")
