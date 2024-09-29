@@ -105,6 +105,16 @@ class ConversationManager:
         _write_json_file(filepath, [])
         return conversation_id
 
+    def delete_conversation(self, conversation_id: ConversationId) -> None:
+        """
+        Deletes a conversation file given its conversation ID.
+        """
+        filepath = self._directory / f"{conversation_id}.json"
+        if filepath.exists():
+            filepath.unlink()
+        else:
+            raise FileNotFoundError(f"Conversation file not found: {filepath}")
+
 
 def show_conversation(
     conversation_manager: ConversationManager,
