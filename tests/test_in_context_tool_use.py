@@ -1,14 +1,17 @@
 import pytest
-from unittest.mock import Mock
 import openai
-from inspect_explorer.in_context_tool_use.function_call_manager import FunctionCallManager
-from inspect_explorer.in_context_tool_use.parsing import parse_tool_use_request_from_model_response
-from inspect_explorer.in_context_tool_use.tool_use_types import (
+import json
+
+from inspect_explorer.in_context_tool_use import (
+    FunctionCallManager,
+    parse_tool_use_request_from_model_response,
     ToolDefinition,
     ToolDefinitionWithCallable,
     ToolUseRequest,
     ToolUseResponse,
+    Constants,
 )
+
 
 def test_function_call_manager():
     def add(a: int, b: int) -> int:
@@ -18,7 +21,7 @@ def test_function_call_manager():
         function_name="add",
         description="Add two numbers",
         arguments=["a", "b"],
-        return_value="The sum of a and b"
+        return_value="The sum of a and b",
     )
     tool_def_with_callable = ToolDefinitionWithCallable(tool_definition=tool_def, callable_fn=add)
 
@@ -38,26 +41,44 @@ def test_function_call_manager():
     with pytest.raises(ValueError):
         fcm.execute_tool(ToolUseRequest(function_name="unknown", arguments={}))
 
-def test_parse_tool_use_request_from_model_response():
-    mock_client = Mock(spec=openai.OpenAI)
-    mock_response = Mock()
-    mock_response.choices = [
-        Mock(
-            message=Mock(
-                parsed=ToolUseRequest(
-                    function_name="test_function",
-                    arguments={"arg1": "value1", "arg2": "value2"}
-                )
-            )
-        )
-    ]
-    mock_client.beta.chat.completions.parse.return_value = mock_response
 
-    model_response = {"role": "assistant", "content": "Test content"}
-    result = parse_tool_use_request_from_model_response(mock_client, model_response)
+# note: we use a real client for this to actually make sure it works
+def test_parse_tool_use_request_from_model_response():
+
+    tool_use_request = ToolUseRequest(
+        function_name="test_function",
+        arguments={"arg1": "value1", "arg2": "value2"},
+    )
+
+    tool_use_request_json = json.dumps(
+        {
+            Constants.TOOL_USE_REQUEST_KEY: tool_use_request.model_dump(),
+        },
+        indent=2,
+    )
+
+    print(tool_use_request_json)
+
+    # create a model response where the tool use request is surrounded by other stuff
+    model_response = {
+        "role": "assistant",
+        "content": (
+            f"Please use the tool: {tool_use_request_json}\n" "I've provided the request above"
+        ),
+    }
+
+    client = openai.OpenAI()
+
+    result = parse_tool_use_request_from_model_response(client, model_response)
 
     assert isinstance(result, ToolUseRequest)
-    assert result.function_name == "test_function"
-    assert result.arguments == {"arg1": "value1", "arg2": "value2"}
+    assert result == tool_use_request
 
-    mock_client.beta.chat.completions.parse.assert_called_once()
+    # now check that if we pass in a model response that doesn't contain the tool use request, we get None
+    model_response = {
+        "role": "assistant",
+        "content": "I've provided the request above",
+    }
+
+    result = parse_tool_use_request_from_model_response(client, model_response)
+    assert result is None

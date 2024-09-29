@@ -48,3 +48,12 @@ class ModelID(Enum):
     #
     # NOTE: These run locally
     HUGGINGFACE_LOCAL_GPT2_SMALL = "hf/openai-community/gpt2"
+
+
+def remove_provider_prefix(model_id: str) -> str:
+    """
+    Remove the provider prefix from a model id.
+
+    Useful when calling provider api directly. (ex: `gpt-4o-mini` instead of `openai/gpt-4o-mini`)
+    """
+    return model_id.value.split("/")[1]
