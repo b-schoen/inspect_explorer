@@ -13,7 +13,9 @@ from openai.types.chat import ChatCompletionMessageParam
 import rich.markdown
 import rich.table
 
+
 from inspect_explorer.model_ids import ModelID
+from inspect_explorer import tokenization
 
 
 type ConversationId = str
@@ -125,14 +127,21 @@ def show_conversation(
     """
     messages = conversation_manager.get_conversation_messages(conversation_id)
 
+    tokenizer = tokenization.create_gpt4o_tokenizer()
+
     table = rich.table.Table(
         "role",
         "content",
+        "(est) token count",
         title=f"Conversation History: {conversation_id}",
         show_lines=True,
     )
 
-    for message in messages:
-        table.add_row(message["role"], rich.markdown.Markdown(message["content"]))
+    for message in reversed(messages):
+        table.add_row(
+            message["role"],
+            rich.markdown.Markdown(message["content"]),
+            str(tokenization.estimate_token_count(message["content"], tokenizer)),
+        )
 
     rich.print(table)

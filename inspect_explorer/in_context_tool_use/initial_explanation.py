@@ -32,6 +32,9 @@ def get_in_context_tool_use_initial_explanation() -> str:
 
     # TODO(bschoen): Make this generated
     return """
+
+== BEGIN TOOL USE PROTOCOL EXPLANATION ==
+
 You will be provided with tools according to the following protocol. Please note that markers such as [user's turn] and [assistant's turn] are not part of the conversation and are only used to separate turns in the conversation.
 
 ```
@@ -83,4 +86,7 @@ You will be provided with tools according to the following protocol. Please note
 ```
 
 Again, note that your do not need to prefix anything with `[assistant's turn]`, that was solely to separate conversation messages in our example.
+
+== END TOOL USE PROTOCOL EXPLANATION ==
+
 """

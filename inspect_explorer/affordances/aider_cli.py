@@ -6,8 +6,8 @@ from inspect_explorer.affordances import raw_bash_execution
 # note: could ask it to write tests first
 # note: just supporting one for now
 def send_aider_message(
-    read_filepath: pathlib.Path,
-    edit_filepath: pathlib.Path,
+    read_filepath: str,
+    edit_filepath: str,
     message_to_coder_model: str,
 ) -> raw_bash_execution.BashCommandResult:
     """
@@ -17,13 +17,14 @@ def send_aider_message(
 
     """
 
-    assert read_filepath.exists()
-    assert edit_filepath.exists()
+    assert pathlib.Path(read_filepath).exists()
+    assert pathlib.Path(edit_filepath).exists()
 
     command = (
         f"aider "
         f"--read {read_filepath} "
         f"--file {edit_filepath} "
+        f"--no-pretty "
         # automatically accept all suggestions
         f"--yes "
         f"--message '{message_to_coder_model}'"
