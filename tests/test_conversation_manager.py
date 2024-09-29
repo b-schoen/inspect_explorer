@@ -65,3 +65,16 @@ def test_conversation_persistence(temp_dir):
     messages = cm2.get_conversation_messages(conversation_id)
     assert len(messages) == 1
     assert messages[0] == message
+
+def test_delete_conversation(conversation_manager):
+    # Create a new conversation
+    conversation_id = conversation_manager.create_new_conversation()
+    assert conversation_id in conversation_manager.get_conversation_ids()
+
+    # Delete the conversation
+    conversation_manager.delete_conversation(conversation_id)
+    assert conversation_id not in conversation_manager.get_conversation_ids()
+
+    # Attempt to delete a non-existent conversation
+    with pytest.raises(FileNotFoundError):
+        conversation_manager.delete_conversation("non_existent_id")
