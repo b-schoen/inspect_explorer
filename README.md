@@ -3,8 +3,14 @@
 - [Inspect Explorer](#inspect-explorer)
 - [What Are All These Wrappers Doing?](#what-are-all-these-wrappers-doing)
   - [Task](#task)
+- [What is a solver?](#what-is-a-solver)
+  - [Interaction between Solver and TaskState](#interaction-between-solver-and-taskstate)
+- [Okay so what is a scorer?](#okay-so-what-is-a-scorer)
+- [Wait Choice and Choices have their own classes?](#wait-choice-and-choices-have-their-own-classes)
+- [So what is ModelOutput?](#so-what-is-modeloutput)
 - [Core Concepts](#core-concepts)
   - [Task](#task-1)
+  - [TaskState](#taskstate)
 
 
 ARENA:
@@ -153,6 +159,268 @@ def task(*create_task_fns: TaskType | None, name: str | None = None, **attribs: 
 
 
 
+---
+
+# What is a solver?
+
+> [!NOTE] A solver is a Python function that takes a TaskState and generate function, and then transforms and returns the TaskState (the generate function may or may not be called depending on the solver).
+
+> [!NOTE] We can use `Scoring in Solvers` to use scorers in solvers
+
+```python
+GenerateFn = Callable[[TaskState], Awaitable[TaskState]]
+
+async def solve_fn(state: TaskState, generate_fn: GenerateFn) -> TaskState:
+
+    new_state = potentially_mutate_state(state)
+
+    # ex: system_message() solver inserts a system message into the chat history.
+    #
+    # ex: chain_of_thought() solver takes the original user prompt and re-writes it to ask
+    #     the model to use chain of thought reasoning to come up with its answer.
+    new_state = modify_message_history(new_state)
+
+    # ex: self_critique() solver:
+    #  - takes the ModelOutput and then
+    #  - sends it to another model for critique.
+    #  - It then replays this critique back within the messages stream as a user message
+    #  - and re-calls generate to get a refined answer
+    new_state = add_a_message(new_state)
+
+    # can also use `generate` to do multi turn stuff or stuff involving the model
+
+    # get next model response after some modifications, so can basically do anything here
+    new_state = generate_fn(new_state)
+    
+    return new_state
+```
+
+for example, full source code of `inspect_ai.solver.generate` is:
+
+```python
+def generate() -> Solver:
+
+    async def solve_fn(state: TaskState, generate_fn: GenerateFn) -> TaskState:
+        return await generate_fn(state)
+
+    return solve_fn
+```
+
+so a solver is just something that creates a `solve_fn`
+
+```python
+def example_solver() -> Solver:
+
+    async def solve_fn(state: TaskState, generate_fn: GenerateFn) -> TaskState:
+
+      new_state = potentially_mutate_state(state)
+
+      # ex: system_message() solver inserts a system message into the chat history.
+      #
+      # ex: chain_of_thought() solver takes the original user prompt and re-writes it to ask
+      #     the model to use chain of thought reasoning to come up with its answer.
+      new_state = modify_message_history(new_state)
+
+      # ex: self_critique() solver:
+      #  - takes the ModelOutput and then
+      #  - sends it to another model for critique.
+      #  - It then replays this critique back within the messages stream as a user message
+      #  - and re-calls generate to get a refined answer
+      new_state = add_a_message(new_state)
+
+      # can also use `generate` to do multi turn stuff or stuff involving the model
+
+      # get next model response after some modifications, so can basically do anything here
+      new_state = generate_fn(new_state)
+      
+      return new_state
+
+    return solve_fn
+```
+
+
+Tasks have a single top-level solver that defines an execution plan. 
+
+This solver could be implemented with:
+ - arbitrary Python code (calling the model as required)
+ - could consist of a set of other sovlers composed together. 
+
+Solvers can therefore play two differnet roles:
+
+1. Composite specifications for task execution; and
+2. Components that can be chained together.
+
+> [!NOTE] While chains are frequently used in more straightforward knowledge and reasoning evaluations, fully custom solver functions are often used for multi-turn dialog and agent evaluations.
+
+- This section covers mostly solvers as components (both built in and creating your own). 
+- The `Agents` section describes fully custom sovlers in more depth.
+
+## Interaction between Solver and TaskState
+
+```python
+class TaskState:
+    messages: list[ChatMessage],
+    output: ModelOutput
+
+    @property
+    def user_prompt(self) -> str:
+        return self.messages[0].content
+
+    # -- metadata --
+
+    # original sample metadata
+    #
+    #   - note: often used to:
+    #      - coordinate between solvers
+    #      - store additional information for logging
+    #
+    metadata: dict[str, Any]
+
+    # -- original sample input, unchanged by solvers --
+
+    input: str | list[ChatMessage]
+
+    @property
+    def input_text(self) -> str:
+        return self.input
+
+    # -- access info about the evaluation --
+    choices: list[str] | None
+    epoch: int
+    sample_id: int | str
+    model: str
+
+```
+
+
+Examples:
+- A prompt engineering solver will modify the content of messages.
+- A model generation solver will call the model, append an assistant message, and set the output
+- A multi-turn dialog solver might do this in a loop
+
+---
+
+# Okay so what is a scorer?
+
+> [!NOTE] Scorers can return dicts, and this will be correctly handled by metrics
+
+> [!NOTE] We don't get a `generate` function passed in, but `model_graded_qa` is example of how you just have it be stateful and call `await generate_fn(state)` in the scorer
+
+```python
+async def score(state: TaskState, target: Target) -> Score:
+  # Compare state / model output with target to yield a score
+
+  model_output: ModelOutput = state.output
+
+  value = compute_score_of_model_output(model_output, target)
+
+  return Score(value=value)
+```
+
+So what's a score?
+
+```python
+class Score:
+    value: Value
+
+    # parsed answer
+    answer: str | None
+
+    # explanation of score, ex: full grader model output
+    explanation: str | None
+
+    # additional metadata about the score to be logged, empty by default
+    metadata: dict[str, Any] | None
+
+```
+
+and `Value` is just a value holder type:
+
+```python
+Value = Union[
+    str | int | float | bool,
+    list[str | int | float | bool],
+    dict[str, str | int | float | bool],
+]
+```
+
+
+---
+
+# Wait Choice and Choices have their own classes?
+
+```python
+@dataclass
+class Choice:
+    """
+    A `Choice` represents a single choice in a multiple choice question.
+
+    It is only relevant for the `multiple_choice` solver and corresponding `choice` scorer.
+    """
+
+    value: str
+    """The original value of the choice from the `Sample`."""
+
+    correct: bool | None
+    """Did the model think this choice satisfies the question? `None` indicates this has not been set yet"""
+
+    original_position: int
+    """Choices may be re-ordered during processing, this represents the original position in the sample."""
+```
+
+```python
+class Choices(Sequence[Choice]):
+
+    def mark_choice(self, index: int, correct: bool) -> None:
+        """Set the value of a specific choice"""
+        self._choices[index].correct = correct
+
+    def shuffle(self, rand: Random = Random()) -> None:
+        ...
+
+    def prompt(self, question: str, template: str) -> str:
+        ...
+```
+
+---
+
+
+
+
+# So what is ModelOutput?
+
+```python
+class ModelOutput(BaseModel):
+    model: str = Field(default="")
+    """Model used for generation."""
+
+    choices: list[ChatCompletionChoice] = Field(default=[])
+    """Completion choices."""
+
+    usage: ModelUsage | None = Field(default=None)
+    """Model token usage"""
+
+    error: str | None = Field(default=None)
+    """Error message in the case of content moderation refusals."""
+
+    @property
+    def stop_reason(self) -> StopReason:
+        """First message stop reason."""
+        return self.choices[0].stop_reason
+
+    @property
+    def message(self) -> ChatMessageAssistant:
+        """First message choice."""
+        return self.choices[0].message
+
+    @property
+    def completion(self) -> str:
+        """Text of first message choice text."""
+        if len(self.choices) > 0:
+            return self.choices[0].message.text
+        else:
+            return ""
+```
 
 
 ---
@@ -202,4 +470,12 @@ class Task:
 
     # Version of task (to distinguish evolutions of the task spec or breaking changes to it)
     version: int = 0
+```
+
+## TaskState
+
+```python
+class TaskState:
+    messages: list[ChatMessage],
+    output: ModelOutput
 ```
