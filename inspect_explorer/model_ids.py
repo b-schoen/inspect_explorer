@@ -1,5 +1,10 @@
 from enum import Enum
 
+import collections
+import dataclasses
+
+Dollar = float
+
 
 # TODO(bschoen): Add cost per 1m tokens
 class ModelID(Enum):
@@ -57,3 +62,27 @@ def remove_provider_prefix(model_id: ModelID) -> str:
     Useful when calling provider api directly. (ex: `gpt-4o-mini` instead of `openai/gpt-4o-mini`)
     """
     return model_id.value.split("/")[1]
+
+
+# token cost in USD
+@dataclasses.dataclass(frozen=True)
+class TokenCost:
+    input_cost_per_million: Dollar
+    output_cost_per_million: Dollar
+
+
+COST_PER_MODEL = {
+    "anthropic/claude-3-5-sonnet-20240620": TokenCost(3.00, 15.00),
+    "anthropic/claude-3-opus-20240229": TokenCost(15.00, 75.00),
+    "anthropic/claude-3-sonnet-20240229": TokenCost(3.00, 15.00),
+    "anthropic/claude-3-haiku-20240307": TokenCost(0.25, 1.25),
+    "openai/o1-mini": TokenCost(3.00, 12.00),
+    "openai/o1-mini-2024-09-12": TokenCost(3.00, 12.00),
+    "openai/o1-preview": TokenCost(15.00, 60.00),
+    "openai/o1-preview-2024-09-12": TokenCost(15.00, 60.00),
+    "openai/gpt-4o-mini": TokenCost(0.150, 0.600),
+    "openai/gpt-4o-mini-2024-07-18": TokenCost(0.150, 0.600),
+    "openai/gpt-4o": TokenCost(5.00, 15.00),
+    "openai/gpt-4o-2024-08-06": TokenCost(2.50, 10.00),
+    "openai/gpt-4o-2024-05-13": TokenCost(5.00, 15.00),
+}

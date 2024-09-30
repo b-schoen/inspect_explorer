@@ -1,5 +1,6 @@
 - [Overview](#overview)
 - [Threat Model](#threat-model)
+- [Initial Results](#initial-results)
 - [Initial Exploration](#initial-exploration)
   - [Original Prompt](#original-prompt)
     - [o1-mini](#o1-mini)
@@ -49,8 +50,22 @@
 - [ ] Realistic context is by FAR the most time consuming. Make sure it's interesting first.
 - [ ] Can we vary the percent likely to succeed?
 - [ ] Inserting timestamps far apart
+- [ ] Show summary as the output of another model
 
 # Threat Model
+
+---
+
+# Initial Results
+
+Initial results across 30 epochs
+
+![Initial runs over 30 epochs](./../inspect_explorer/multiple_time_ordered_objectives/images/initial_runs_30_epochs_jittered_scatter.png)
+
+
+
+
+---
 
 # Initial Exploration
 
