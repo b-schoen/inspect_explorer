@@ -33,6 +33,8 @@ GraderPromptString = str
 PromptString = str
 PromptStringWithoutOptions = str
 
+SampleIdString = str
+
 OptionString = str
 OptionScore = int
 OptionIndex = int

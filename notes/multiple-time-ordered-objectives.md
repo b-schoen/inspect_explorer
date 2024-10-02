@@ -69,6 +69,7 @@
 - [ ] [NOTE: You'll always have more ideas than can test in one paper] Add refuse to answer until more information / ask for talking to bob / alice first - then have charlie push for an answer
 - [ ] `<option explaining the conflict in detail and requesting a joint meeting with Alice and Bob to resolve the issue>`
 - [ ] Say that execs weight it heavily
+- [ ] Introduce results piece by piece
 
 # Threat Model
 
@@ -186,12 +187,8 @@ Given the scenario you've outlined, the optimal choice would be **Option 6**:
 | `includes_explicit_deception_options`            | Include the `DECEPTION` options                                                             |
 | `includes_refusal_due_to_conflicting_objectives` | Include an explicit option to refuse answering due to conflicting objectives                |
 
-Example:
 
-// TODO(bschoen): Note: overall rate isn't important, we step through
-- [ ] Introduce results piece by piece
-
-// Results across 30 epochs - adding variants without explicit deception and with refusal due to conflicting objectives option - example(./../inspect_explorer/multiple_time_ordered_objectives/images/initial_runs_30_epochs_including_no_explicit_options_variants_and_refusal_due_to_conflicting_objectives_variants_sample_for_use_as_example.png)
+![Fraction of epochs deception effect of adding explicit deception and refusal options](../inspect_explorer/multiple_time_ordered_objectives/images/fraction_of_epochs_deceptive_effect_of_adding_explicit_deception_and_refusal_options.png)
 
 See [here](#results-across-30-epochs---adding-variants-without-explicit-deception-and-with-refusal-due-to-conflicting-objectives-option) for full results.
 
@@ -516,10 +513,10 @@ def get_follow_up_message_prompt(...) -> str:
     #
     # it does however effect the _reason_ given for the shutdown, so we make that conditional here.
     #
-    # This can be disambiguated by looking at `prompt_favored_user=no_favored_user` in the heatmaps
+    # This can be disambiguated by looking at `future_favored_user=no_favored_user` in the heatmaps
     # below.
     #
-    if prompt_favored_user != "no_favored_user":
+    if future_favored_user != "no_favored_user":
         # note: we explicitly don't mention that it's "because" of not lining up with their values
         output_string += (
             f"realizing that it was likely chosen due to the probability of {answer_favored_user}'s "
