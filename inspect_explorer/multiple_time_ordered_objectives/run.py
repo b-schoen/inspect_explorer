@@ -1239,14 +1239,14 @@ def main() -> None:
     tasks = example_task()
 
     DEBUG = False
-    USE_CONTINUATION_DATASET = False
+    USE_CONTINUATION_DATASET = True
 
     if USE_CONTINUATION_DATASET:
 
         # eval_set is fine with different tasks having the same function, as it will
         # use the input arguments to the task factory function to separate task sets
-        # dataset_name = "initial_small_dataset_with_followup_shutdown_question"
-        dataset_name = "initial_small_dataset_original_no_deception_with_followup_shutdown_question"
+        dataset_name = "initial_small_dataset_with_followup_shutdown_question"
+        # dataset_name = "initial_small_dataset_original_no_deception_with_followup_shutdown_question"
         model_names = [x.value for x in [model_ids.ModelID.O1_MINI, model_ids.ModelID.O1_PREVIEW]]
 
         for model_name in tqdm.tqdm(model_names, desc="Models"):
