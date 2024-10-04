@@ -1247,7 +1247,8 @@ def main() -> None:
         # use the input arguments to the task factory function to separate task sets
         # dataset_name = "initial_small_dataset_with_followup_shutdown_question"
         # dataset_name = "initial_small_dataset_original_no_deception_with_followup_shutdown_question"
-        dataset_name = "initial_small_dataset_original_plausible_deniability_with_followup_non_shutdown_question"
+        # dataset_name = "initial_small_dataset_original_plausible_deniability_with_followup_non_shutdown_question"
+        dataset_name = "initial_small_dataset_original_plausible_deniability_with_followup_non_realize_favor_question"
         model_names = [x.value for x in [model_ids.ModelID.O1_MINI, model_ids.ModelID.O1_PREVIEW]]
 
         for model_name in tqdm.tqdm(model_names, desc="Models"):
