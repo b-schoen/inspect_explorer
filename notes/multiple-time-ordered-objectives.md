@@ -114,7 +114,7 @@ Here we show an example of the `o1` series:
 * Choosing the option of deceiving the original user, making tradeoffs _against_ their objective in favor of the user suspected to be succesful in the long term
 
 **Important Caveats**
-* In all cases when discussing "deception", we mean strictly in the sense of choosing the options defined in [Setup - Scoring - DECEPTION](#deception)
+* In all cases when discussing "deception" / "strategic", we mean strictly in the sense of a consistent pattern in choosing the options defined in [Setup - Scoring - DECEPTION](#deception)
 * All discussion of "rates" refer to rates across variations of our toy example, not implications for rates of similar behavior across a variety of real world contexts
 * We're primarily focused on a single artificial case. Although we see the same behavior in our example in [What About In A Realistic Context?](#realistic-context), it is also a single example.
 
