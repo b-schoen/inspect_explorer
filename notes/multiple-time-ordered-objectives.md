@@ -106,9 +106,9 @@ Here we show an example of the o1 series:
 
 **Important Caveats**
 * In all cases when discussing "deception", we mean strictly in the sense of choosing the options defined in [Setup - Scoring - DECEPTION](#deception)
-* In all cases when discussing "strategic deception", we mean strictly according to the definition in [Results](#results)
 * All discussion of "rates" refer to rates across variations of our toy example, not implications for rates of similar behavior across a variety of real world contexts
 * We're primarily focused on a single artificial case. Although we see the same behavior in our example in [What About In A Realistic Context?](#realistic-context), it is also a single example.
+* In all cases when discussing "strategic", we mean strictly 
 
 # Setup
 
@@ -290,7 +290,7 @@ We aim to show this a few ways:
  * [What About In A Realistic Context?](#realistic-context) - We manually construct a realistic company slack environment and demonstrate both `o1` models choosing the `DECEPTION` option that favors the future winner
  * [Model Answer Changes Based On Discovery Of Favoring Objective](#model-answer-changes-based-on-discovery-of-favoring-objective) - We take the cases where the model did not choose the `DECEPTION` option and follow up by informing the model that the `user_not_favored_by_model_answer` will realize it is not favoring their objective. Then in the cases where the model changes it's answer to the `DECEPTION` option, we show it  **outwardly** favors the user who would realize their objective is not favored but **deceptively** favors the user whose objective is believed to be the long term successful objective
 
-In [Appendix - Model Given Rationale for `DECEPTION` Option](#model-given-rationale-for-deception-option) to give a sense of the rationale given in the responses, we use model grading to determine the rate at which model's given rationale for the `DECEPTION` option contains reservations, suggests alternatives, or otherwise caveats it's recommendation. These do not directly factor into any other quantitative analysis.
+In [Appendix - Model Given Rationale for `DECEPTION` Option](#model-given-rationale-for-deception-option) to give a sense of the rationale given in the responses, we use model grading to determine the rate at which model's given rationale for the `DECEPTION` option contains reservations, suggests alternatives, or otherwise caveats it's recommendation (along with many other grading variants). These do not directly factor into any other quantitative analysis.
 
 ## Models Choosing Deception Favor Future Winner
 
